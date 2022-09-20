@@ -31,7 +31,7 @@ fn scroll_events(
             let mut camera = player_query.single_mut();
             if event.unit == MouseScrollUnit::Line {
                 already_scrolled = true;
-                camera.0.scale += (camera.0.scale * 1.1 - camera.0.scale) * event.y;
+                camera.0.scale += (camera.0.scale * 1.1 - camera.0.scale) * -event.y;
                 event_writer.send(CameraMovedEvent(camera.1.translation, camera.0.scale));
             }
         }
@@ -59,7 +59,7 @@ fn key_input(
 ) {
     let mut camera = query.single_mut();
     let mut camera_moved: bool = false;
-    let camera_speed = settings::CAMERA_SPEED * timer.delta_seconds();
+    let camera_speed = settings::CAMERA_SPEED * timer.delta_seconds() * camera.1.scale;
     for pressed in input
         .get_pressed()
         .filter(|key| MOVE_CAMERA_KEYS.contains(key))
