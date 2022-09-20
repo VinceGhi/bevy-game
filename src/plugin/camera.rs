@@ -1,8 +1,8 @@
 use crate::{map, settings};
 use bevy::{
     prelude::{
-        Camera2dBundle, Commands, Component, EventReader, EventWriter, Name, Plugin, Query,
-        SystemSet, Transform, Vec3, Visibility, With, Without, info,
+        info, Camera2dBundle, Commands, Component, EventReader, EventWriter, Name, Plugin, Query,
+        SystemSet, Transform, Vec3, Visibility, With, Without,
     },
     render::camera::ScalingMode,
 };
@@ -63,8 +63,8 @@ fn camera_update_event(
         tilemap_query.for_each_mut(|mut tile| {
             let dif_x = (event.0.x - tile.0 .1.translation.x).abs();
             let dif_y = (event.0.y - tile.0 .1.translation.y).abs();
-            tile.0.0.is_visible = dif_x < camera_view_border_x && dif_y < camera_view_border_y;
-            if tile.0.0.is_visible {
+            tile.0 .0.is_visible = dif_x < camera_view_border_x && dif_y < camera_view_border_y;
+            if tile.0 .0.is_visible {
                 visible_tile_counter += 1;
             }
         });

@@ -1,53 +1,56 @@
+mod map;
 mod plugin;
 mod settings;
-mod map;
 
-use plugin::{texture_loader, input, camera};
+use plugin::{camera, input, texture_loader};
 
-use bevy::{
-    prelude::{
-        App, Commands, Component, TextBundle, Res, AssetServer, Color, With, Query,
-    },
-    window::{WindowDescriptor, PresentMode},
-    DefaultPlugins, log::LogSettings, text::{TextSection, TextStyle, Text}, ui::{Style, PositionType, UiRect, Val}, utils::default, diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
-};
 use bevy::prelude::ClearColor;
+use bevy::{
+    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
+    prelude::{App, AssetServer, Color, Commands, Component, Query, Res, TextBundle, With},
+    text::{Text, TextSection, TextStyle},
+    ui::{PositionType, Style, UiRect, Val},
+    DefaultPlugins,
+};
 
 fn main() {
     App::new()
-        .insert_resource(LogSettings {
+        // RESOURCES
+        .insert_resource(ClearColor(settings::CLEAR_COLOR))
+        .insert_resource(bevy::log::LogSettings {
             filter: "info,wgpu_core=warn,wgpu_hal=warn,bevy-test=debug".into(),
             level: bevy::log::Level::DEBUG,
         })
-        .insert_resource(ClearColor(settings::CLEAR_COLOR))
-        .insert_resource(WindowDescriptor {
+        .insert_resource(bevy::window::WindowDescriptor {
             width: settings::RESOLUTION.x,
             height: settings::RESOLUTION.y,
             title: "Bevy Test".to_string(),
             resizable: false,
             cursor_visible: true,
             cursor_locked: false,
-            present_mode: PresentMode::Fifo,
+            present_mode: bevy::window::PresentMode::AutoNoVsync,
             ..Default::default()
         })
+        // STATE
+        .add_state(settings::GameState::Game)
+        // PLUGINS
         .add_plugin(texture_loader::TextureLoaderPlugin)
         .add_plugin(input::InputPlugin)
         .add_plugin(camera::CameraPlugin)
         //.add_plugin(player::PlayerPlugin)
         .add_plugin(map::MapTestPlugin)
-        .add_state(settings::GameState::Game)
         .add_plugins(DefaultPlugins)
-        .add_system(fps_stats)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_startup_system(setup)
+        // STARTUP SYSTEMS
+        .add_startup_system(fps_text_setup_system)
+        // SYSTEMS
+        .add_system(fps_text_update_system)
         .run();
 }
 
-fn setup(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>
-) {
-    commands.spawn_bundle(
+fn fps_text_setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
                     "\nAverage FPS: ",
@@ -79,7 +82,7 @@ fn setup(
 #[derive(Component)]
 struct StatsText;
 
-fn fps_stats(
+fn fps_text_update_system(
     diagnostics: Res<Diagnostics>,
     mut query: Query<&mut Text, With<StatsText>>,
 ) {

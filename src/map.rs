@@ -2,8 +2,8 @@ use std::ops::Div;
 
 use bevy::{
     prelude::{
-        Commands, Component, ComputedVisibility, Name, Plugin, Res, SystemSet, Transform,
-        Vec2, Visibility, VisibilityBundle,
+        Commands, Component, ComputedVisibility, Name, Plugin, Res, SystemSet, Transform, Vec2,
+        Visibility, VisibilityBundle,
     },
     sprite::{SpriteSheetBundle, TextureAtlasSprite},
 };
@@ -23,7 +23,7 @@ impl Plugin for MapTestPlugin {
 pub struct MapTile;
 
 fn create_map(mut commands: Commands, tilset: Res<texture_loader::TerrainTileset>) {
-    let map_width_and_height = 500;
+    let map_width_and_height = 200;
     let mut rng = rand::thread_rng();
     for x in 0..map_width_and_height {
         for y in 0..map_width_and_height {
@@ -31,7 +31,10 @@ fn create_map(mut commands: Commands, tilset: Res<texture_loader::TerrainTileset
                 &mut commands,
                 &tilset,
                 rng.gen::<usize>() % 100,
-                Vec2::new((x - map_width_and_height.div(2)) as f32, (y - map_width_and_height.div(2)) as f32),
+                Vec2::new(
+                    (x - map_width_and_height.div(2)) as f32,
+                    (y - map_width_and_height.div(2)) as f32,
+                ),
             );
         }
     }
