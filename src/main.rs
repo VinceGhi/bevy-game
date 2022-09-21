@@ -1,45 +1,30 @@
-mod map;
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // disable console on windows
+
+mod debug;
 mod plugin;
 mod settings;
 
-use plugin::{camera, input, texture_loader};
+use plugin::{camera, input, map, texture_loader};
 
-use bevy::prelude::ClearColor;
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{App, AssetServer, Color, Commands, Component, Query, Res, TextBundle, With},
     text::{Text, TextSection, TextStyle},
     ui::{PositionType, Style, UiRect, Val},
-    DefaultPlugins,
 };
 
 fn main() {
     App::new()
-        // RESOURCES
-        .insert_resource(ClearColor(settings::CLEAR_COLOR))
-        .insert_resource(bevy::log::LogSettings {
-            filter: "info,wgpu_core=warn,wgpu_hal=warn,bevy-test=debug".into(),
-            level: bevy::log::Level::DEBUG,
-        })
-        .insert_resource(bevy::window::WindowDescriptor {
-            width: settings::RESOLUTION.x,
-            height: settings::RESOLUTION.y,
-            title: "Bevy Test".to_string(),
-            resizable: false,
-            cursor_visible: true,
-            cursor_locked: false,
-            present_mode: bevy::window::PresentMode::AutoNoVsync,
-            ..Default::default()
-        })
+        .insert_resource(bevy::render::texture::ImageSettings::default_nearest())
+        .add_plugin(settings::SettingsPlugin)
+        .add_plugin(debug::DebugPlugin)
         // STATE
         .add_state(settings::GameState::Game)
         // PLUGINS
         .add_plugin(texture_loader::TextureLoaderPlugin)
         .add_plugin(input::InputPlugin)
         .add_plugin(camera::CameraPlugin)
-        //.add_plugin(player::PlayerPlugin)
-        .add_plugin(map::MapTestPlugin)
-        .add_plugins(DefaultPlugins)
+        .add_plugin(map::TileMapPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         // STARTUP SYSTEMS
         .add_startup_system(fps_text_setup_system)

@@ -1,10 +1,10 @@
-use super::camera::{self, CameraMovedEvent};
-use crate::{map, settings};
+use super::camera::{self, CameraCrossedChunkBorderEvent, TileMapCameraPosition};
+use crate::settings;
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
     prelude::{
         EventReader, EventWriter, Input, KeyCode, OrthographicProjection, Plugin, Query, Res,
-        SystemSet, Transform, With, Without,
+        SystemSet, Transform, With,
     },
     time::Time,
 };
@@ -22,18 +22,29 @@ impl Plugin for InputPlugin {
 }
 fn scroll_events(
     mut scroll_events: EventReader<MouseWheel>,
-    mut player_query: Query<(&mut OrthographicProjection, &Transform), With<camera::MainCamera>>,
-    mut event_writer: EventWriter<CameraMovedEvent>,
+    mut player_query: Query<
+        (
+            &mut OrthographicProjection,
+            &Transform,
+            &mut TileMapCameraPosition,
+        ),
+        With<camera::MainCamera>,
+    >,
+    mut event_writer: EventWriter<CameraCrossedChunkBorderEvent>,
 ) {
-    let mut already_scrolled = false;
     for event in scroll_events.iter() {
-        if !already_scrolled {
-            let mut camera = player_query.single_mut();
-            if event.unit == MouseScrollUnit::Line {
-                already_scrolled = true;
-                camera.0.scale += (camera.0.scale * 1.1 - camera.0.scale) * -event.y;
-                event_writer.send(CameraMovedEvent(camera.1.translation, camera.0.scale));
-            }
+        let mut camera = player_query.single_mut();
+        let camera_pos = TileMapCameraPosition::new(camera.1.clone(), camera.0.clone(), true);
+        camera.2.pos = camera_pos.pos;
+        camera.2.view = camera_pos.view;
+        if event.unit == MouseScrollUnit::Line {
+            camera.0.scale += (camera.0.scale * 1.1 - camera.0.scale) * -event.y;
+            event_writer.send(CameraCrossedChunkBorderEvent(
+                camera.1.translation,
+                camera.0.scale,
+                camera_pos,
+            ));
+            continue;
         }
     }
 }
@@ -52,14 +63,18 @@ fn key_input(
     input: Res<Input<KeyCode>>,
     timer: Res<Time>,
     mut query: Query<
-        (&mut Transform, &OrthographicProjection),
-        (With<camera::MainCamera>, Without<map::MapTile>),
+        (
+            &mut Transform,
+            &OrthographicProjection,
+            &mut camera::TileMapCameraPosition,
+        ),
+        With<camera::MainCamera>,
     >,
-    mut event_writer: EventWriter<CameraMovedEvent>,
+    mut event_writer: EventWriter<CameraCrossedChunkBorderEvent>,
 ) {
     let mut camera = query.single_mut();
     let mut camera_moved: bool = false;
-    let camera_speed = settings::CAMERA_SPEED * timer.delta_seconds() * camera.1.scale;
+    let camera_speed = settings::CAMERA_SPEED * timer.delta_seconds() * camera.1.scale * 500.0;
     for pressed in input
         .get_pressed()
         .filter(|key| MOVE_CAMERA_KEYS.contains(key))
@@ -87,6 +102,16 @@ fn key_input(
     }
 
     if camera_moved {
-        event_writer.send(CameraMovedEvent(camera.0.translation, camera.1.scale));
+        let new_tilemap_camera_position =
+            TileMapCameraPosition::new(camera.0.clone(), camera.1.clone(), false);
+        if !new_tilemap_camera_position.eq(camera.2.clone()) {
+            camera.2.pos = new_tilemap_camera_position.pos;
+            camera.2.view = new_tilemap_camera_position.view;
+            event_writer.send(CameraCrossedChunkBorderEvent(
+                camera.0.translation,
+                camera.1.scale,
+                TileMapCameraPosition::new(camera.0.clone(), camera.1.clone(), true),
+            ));
+        }
     }
 }
