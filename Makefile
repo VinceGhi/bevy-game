@@ -18,5 +18,8 @@ build_linux:
 	cp -rp assets/ target/build/$(VERISON)/linux/
 	cp target/release/bevy-test target/build/$(VERISON)/linux/bevy-test
 
+run: test
+	cargo run --features bevy/dynamic
+
 test:
 	cargo test

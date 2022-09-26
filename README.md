@@ -1,8 +1,5 @@
 Little project for learning rust and bevy
 
-You need to install cargo-make if you want to use the build.toml.
-
-1. install `cargo install --force cargo-make`
-2. run `cargo make` to build for windows and linux
-
-if you simply wnat to run the game in debug-mode: `cargo run --features bevy/dynamic`
+1. run `make` to build for windows and linux
+2. `make windows/linux` to build specifically for windows or linux
+3. `make run` to run as with faster compile time and in debug mode
